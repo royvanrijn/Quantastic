@@ -24,6 +24,10 @@ public class QSystem {
         initializeSystem(0);
     }
 
+    /**
+     * Put the entire quantum circuit to one fixed outcome.
+     * @param setValue
+     */
     private void initializeSystem(int setValue) {
         Complex[][] states = new Complex[1][systemSize];
         // Set initial probabilities to ZERO:
@@ -34,6 +38,12 @@ public class QSystem {
         this.system = MatrixUtils.createFieldMatrix(states);
     }
 
+    /**
+     * Apply a measurement to the quantum circuit.
+     *
+     * This puts the entire system into the measured state.
+     * @return
+     */
     public QSystem measure() {
 
         double[] normalized = getNormalizedReals();
@@ -61,20 +71,24 @@ public class QSystem {
         return this;
     }
 
+    /**
+     * Method for getting the normalized real values.
+     * @return
+     */
     private double[] getNormalizedReals() {
-        // Assert that the system is still normalized (sanity check):
-        double[] values =
-                Arrays.stream(system.getRow(0))
+        // Get all the probabilities of the system and square them:
+        double[] values = Arrays.stream(system.getRow(0))
                         .mapToDouble(c -> Math.pow(c.getReal(), 2))
                         .toArray();
 
-        // Normalize:
+        // Get the total sum:
         double valuesTotal = Arrays.stream(values).sum();
+        // Normalize the values:
         return Arrays.stream(values).map(d -> d / valuesTotal).toArray();
     }
 
     /**
-     * Apply a gate by creating a big master matrix containing the given gate and setting all the other qubits to use the identity gate (NOP).
+     * Apply a gate to the given wires.
      *
      * @param gate
      * @param wires
@@ -90,7 +104,8 @@ public class QSystem {
         for(int row = 0; row < systemSize; row++)  {
             for(int col = 0; col < systemSize; col++) {
 
-                // Weird bit of code based on: https://github.com/RoboNeo9/Java-Quantum-Computer-Simulator/blob/master/Core/MasterGate.java
+                // Weird bit of code based on:
+                // https://github.com/RoboNeo9/Java-Quantum-Computer-Simulator/blob/master/Core/MasterGate.java
 
                 // First we look up which qubits are NOT part of the wires of this gate:
                 int rowQubitsNotWire = 0;
@@ -124,14 +139,21 @@ public class QSystem {
             }
         }
 
+        // Print the matrix:
         prettyPrintMatrix(masterGate);
 
-        // Apply the gate:
+        // Apply the gate matrix to the system:
         system = system.multiply(masterGate);
 
         return this;
     }
 
+    /**
+     * Small method to clean up the gate
+     * (for example the Fourier gate often has rounding errors, this makes small numbers zero again for readability)
+     * @param data
+     * @return
+     */
     private Complex clean(Complex data) {
         // Clean up very small numbers to get a 'clean' gate
         if(Math.abs(data.getReal()) < ROUNDING) {

@@ -17,9 +17,6 @@ public class Gates {
 
     /**
      * Pauli-X gate (NOT):
-     *
-     * 0 1
-     * 1 0
      */
     public static final FieldMatrix<Complex> PAULI_X_GATE =
             MatrixUtils.createFieldMatrix(new Complex[][] {
@@ -28,7 +25,7 @@ public class Gates {
             });
 
     /**
-     * Pauli-Y gate
+     * Pauli-Y gate (different NOT):
      */
     public static final FieldMatrix<Complex> PAULI_Y_GATE =
             MatrixUtils.createFieldMatrix(new Complex[][] {
@@ -37,7 +34,7 @@ public class Gates {
             });
 
     /**
-     * Pauli-Y gate
+     * Pauli-Z gate
      */
     public static final FieldMatrix<Complex> PAULI_Z_GATE =
             MatrixUtils.createFieldMatrix(new Complex[][] {
@@ -67,6 +64,9 @@ public class Gates {
 
     //TODO: Create a 'generic' control gate so it can be combined with other gates
 
+    /**
+     * Quantum Fourier gate
+     */
     public static final FieldMatrix<Complex> FOURIER_GATE(int qubits) {
         int size = (int) Math.pow(2, qubits);
         Complex[][] gate = new Complex[size][size];
