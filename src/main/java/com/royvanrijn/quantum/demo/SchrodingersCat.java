@@ -4,6 +4,9 @@ import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.linear.FieldMatrix;
 import org.apache.commons.math3.linear.MatrixUtils;
 
+/**
+ *  Same code as Qubit3, but with Schrodingers cat, it's mandatory.
+ */
 @SuppressWarnings("all")
 public class SchrodingersCat {
 

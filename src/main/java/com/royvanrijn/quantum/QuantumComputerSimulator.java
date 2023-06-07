@@ -13,7 +13,6 @@ public class QuantumComputerSimulator {
                 .applyGate(Gates.HADAMARD_GATE, 1)
                 .applyGate(Gates.FOURIER_GATE(3), 2,1,0)
                 .print()
-                .measure()
-        ;
+                .measure();
     }
 }

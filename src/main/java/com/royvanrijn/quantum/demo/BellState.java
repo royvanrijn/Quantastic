@@ -13,7 +13,7 @@ public class BellState {
         // Bell state, entangle two qubits:
         int[] states = new int[4];
 
-        for(int i = 0; i < 1000; i++) {
+        for(int i = 0; i < 10000; i++) {
             int measured = new QSystem(2)
                     .applyGate(Gates.HADAMARD_GATE, 0)
                     .applyGate(Gates.CNOT_GATE, 0, 1)

@@ -2,6 +2,9 @@ package com.royvanrijn.quantum.demo;
 
 import org.apache.commons.math3.complex.Complex;
 
+/**
+ *  This code shows the basis of a quantum system, a qubit as a complex number with probabilities of |0> and |1>
+ */
 @SuppressWarnings("all")
 public class Qubit1 {
 

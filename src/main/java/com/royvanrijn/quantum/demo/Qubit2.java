@@ -4,6 +4,9 @@ import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.linear.FieldMatrix;
 import org.apache.commons.math3.linear.MatrixUtils;
 
+/**
+ *  This code shows the basis of a quantum computing, applying a quantum gate works like a matrix operation on the state space.
+ */
 @SuppressWarnings("all")
 public class Qubit2 {
 

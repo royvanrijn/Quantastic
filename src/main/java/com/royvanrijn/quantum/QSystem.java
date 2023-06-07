@@ -96,6 +96,9 @@ public class QSystem {
      */
     public QSystem applyGate(final FieldMatrix<Complex> gate, final int... wires) {
 
+        // TODO We don't need to apply each gate separately, most quantum systems/simulators have an option to apply multiple gates at different steps.
+        // Should be possible to implement.
+
         FieldMatrix<Complex> masterGate = createEmptyMatrix();
 
         int[] sortedWires = Arrays.copyOf(wires, wires.length);

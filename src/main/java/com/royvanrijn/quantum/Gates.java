@@ -4,6 +4,11 @@ import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.linear.FieldMatrix;
 import org.apache.commons.math3.linear.MatrixUtils;
 
+/**
+ * All quantum gates can be simulated by "simple" matrix operations on Complex numbers.
+ *
+ * This class implements most common quantum gates.
+ */
 public class Gates {
 
     /**

@@ -4,6 +4,9 @@ import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.linear.FieldMatrix;
 import org.apache.commons.math3.linear.MatrixUtils;
 
+/**
+ *  This code shows the basis of a quantum superposition, a qubit with a random outcome.
+ */
 @SuppressWarnings("all")
 public class Qubit3 {
 
