@@ -9,7 +9,7 @@ import org.apache.commons.math3.linear.MatrixUtils;
 public class QSystem {
 
     // A very small number to clean up results
-    private static final double ROUNDING = 0.0000000000000001;
+    private static final double ROUNDING = 0.0000000000001;
 
     private final int qubits;
     private final int systemSize;
@@ -46,7 +46,7 @@ public class QSystem {
      */
     public int measure() {
 
-        double[] normalized = getNormalizedReals();
+        double[] normalized = getNormalized();
 
         // Take a measurement over the normalized values:
         double measurement = Math.random();
@@ -75,10 +75,10 @@ public class QSystem {
      * Method for getting the normalized real values.
      * @return
      */
-    private double[] getNormalizedReals() {
+    private double[] getNormalized() {
         // Get all the probabilities of the system and square them:
         double[] values = Arrays.stream(system.getRow(0))
-                        .mapToDouble(c -> Math.pow(c.getReal(), 2))
+                        .mapToDouble(c -> Math.pow(c.getReal(), 2) + Math.pow(c.getImaginary(), 2))
                         .toArray();
 
         // Get the total sum:
@@ -96,6 +96,9 @@ public class QSystem {
      */
     public QSystem applyGate(final FieldMatrix<Complex> gate, final int... wires) {
 
+        final Complex[][] gateData = gate.getData();
+
+        System.out.println("Gate:");
         // TODO We don't need to apply each gate separately, most quantum systems/simulators have an option to apply multiple gates at different steps.
         // Should be possible to implement.
 
@@ -114,6 +117,7 @@ public class QSystem {
                 int rowQubitsNotWire = 0;
                 int colQubitsNotWire = 0;
 
+                //TODO optimize this:
                 for(int i = 0; i < qubits; i++) {
                     // If this is NOT part of the wire, add these bits to our bitstring:
                     if(Arrays.binarySearch(sortedWires, i) < 0) {
@@ -128,26 +132,30 @@ public class QSystem {
                     int rowQubitsWire = 0;
                     int colQubitsWire = 0;
 
+                    //TODO optimize this:
                     // Beware, the order of wires here is important (in relation to the gate), reverse traversal matters
-                    for(int i = 0; i < wires.length; i++) {
+                    for(int i = wires.length-1; i >= 0; i--) {
                         int wire = wires[i];
                         // Shift everything and add the current row and col bit:
                         rowQubitsWire = (rowQubitsWire << 1) | ((row >> wire) & 1);
                         colQubitsWire = (colQubitsWire << 1) | ((col >> wire) & 1);
                     }
 
-                    Complex data = gate.getData()[rowQubitsWire][colQubitsWire];
+                    Complex data = gateData[rowQubitsWire][colQubitsWire];
                     masterGate.setEntry(row, col, clean(data));
                 }
             }
         }
 
         // Print the matrix:
-        prettyPrintMatrix(masterGate);
+//        prettyPrintMatrix(masterGate);
 
+        System.out.println(masterGate.getRowDimension()+" x "+masterGate.getColumnDimension());
         // TODO: If the gate we're applying only affects some qubits, like a single wire, do we need this large matrix?
         // Apply the gate matrix to the system:
         system = system.multiply(masterGate);
+
+        prettyPrintMatrix(system);
 
         return this;
     }
@@ -204,7 +212,7 @@ public class QSystem {
                     .append("\t")
                     .append(toBinaryString(ptr))
                     .append(": ")
-                    .append(system.getEntry(0, ptr));
+                    .append(clean(system.getEntry(0, ptr)));
             if(ptr < systemSize - 1) {
                 stringBuilder.append(System.lineSeparator());
             }
@@ -216,7 +224,7 @@ public class QSystem {
                 .append(System.lineSeparator());
 
         double[] chances = new double[qubits];
-        double[] normalized = getNormalizedReals();
+        double[] normalized = getNormalized();
         for(int i = 0; i < systemSize; i++) {
             for(int qubit = 0; qubit < qubits; qubit++) {
                 if(((1 << qubit) & i) > 0) {

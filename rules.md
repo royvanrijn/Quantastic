@@ -6,7 +6,6 @@ Y: turn towards you (50%), top goes all the way down
 X: turn counterclockwise, top goes to the right all the way down
 H: rotate around X and Y
 
-
 Unknowns:
 
 How do you do a control and use it afterwards?

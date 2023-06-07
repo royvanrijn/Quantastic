@@ -99,6 +99,17 @@ public class Gates {
                     {Complex.ZERO, Complex.ZERO, Complex.ZERO, Complex.ONE},
                     {Complex.ZERO, Complex.ZERO, Complex.ONE, Complex.ZERO},
             });
+
+    /**
+     * C-Z gate
+     */
+    public static final FieldMatrix<Complex> CZ_GATE =
+            MatrixUtils.createFieldMatrix(new Complex[][] {
+                    {Complex.ONE, Complex.ZERO, Complex.ZERO, Complex.ZERO},
+                    {Complex.ZERO, Complex.ONE, Complex.ZERO, Complex.ZERO},
+                    {Complex.ZERO, Complex.ZERO, Complex.ONE, Complex.ZERO},
+                    {Complex.ZERO, Complex.ZERO, Complex.ZERO, Complex.ONE.negate()},
+            });
     //TODO: Create a 'generic' control gate so it can be combined with other gates
     //TODO: This is built up using identity and control.
 
@@ -106,6 +117,7 @@ public class Gates {
      * Quantum Fourier gate
      */
     public static final FieldMatrix<Complex> FOURIER_GATE(int qubits) {
+
         int size = (int) Math.pow(2, qubits);
         Complex[][] gate = new Complex[size][size];
 
