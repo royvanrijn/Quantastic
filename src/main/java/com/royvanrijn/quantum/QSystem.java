@@ -1,10 +1,10 @@
 package com.royvanrijn.quantum;
 
+import java.util.Arrays;
+
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.linear.FieldMatrix;
 import org.apache.commons.math3.linear.MatrixUtils;
-
-import java.util.Arrays;
 
 public class QSystem {
 
@@ -44,7 +44,7 @@ public class QSystem {
      * This puts the entire system into the measured state.
      * @return
      */
-    public QSystem measure() {
+    public int measure() {
 
         double[] normalized = getNormalizedReals();
 
@@ -68,7 +68,7 @@ public class QSystem {
         initializeSystem(measuredState);
 
         System.out.println("System collapsed into measured state.");
-        return this;
+        return measuredState;
     }
 
     /**
@@ -126,7 +126,7 @@ public class QSystem {
                     int colQubitsWire = 0;
 
                     // Beware, the order of wires here is important (in relation to the gate), reverse traversal matters
-                    for(int i = wires.length; i-->0;) {
+                    for(int i = 0; i < wires.length; i++) {
                         int wire = wires[i];
                         // Shift everything and add the current row and col bit:
                         rowQubitsWire = (rowQubitsWire << 1) | ((row >> wire) & 1);
@@ -142,6 +142,7 @@ public class QSystem {
         // Print the matrix:
         prettyPrintMatrix(masterGate);
 
+        // TODO: If the gate we're applying only affects some qubits, like a single wire, do we need this large matrix?
         // Apply the gate matrix to the system:
         system = system.multiply(masterGate);
 
@@ -183,7 +184,7 @@ public class QSystem {
     }
 
     public QSystem print() {
-        System.out.println(this.toString());
+        System.out.println(this);
         return this;
     }
 

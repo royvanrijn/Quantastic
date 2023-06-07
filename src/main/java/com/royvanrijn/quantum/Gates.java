@@ -51,6 +51,39 @@ public class Gates {
                     {new Complex(1/Math.sqrt(2)),new Complex(-1/Math.sqrt(2))}
             });
 
+
+    /**
+     * Phase gate (S-Gate)
+     */
+    public static final FieldMatrix<Complex> PHASE_GATE =
+            MatrixUtils.createFieldMatrix(new Complex[][] {
+                    {Complex.ONE, Complex.ZERO},
+                    {Complex.ZERO, Complex.I }
+            });
+
+
+    /**
+     * π/8 gate (T gate)
+     */
+    public static final FieldMatrix<Complex> T_GATE =
+            MatrixUtils.createFieldMatrix(new Complex[][] {
+                    {Complex.ONE, Complex.ZERO},
+                    {Complex.ZERO, new Complex(0, Math.PI / 4).exp()}
+            });
+
+
+    /**
+     * Swap Gate (swap the value of two qubits.
+     */
+    public static final FieldMatrix<Complex> SWAP_GATE =
+            MatrixUtils.createFieldMatrix(new Complex[][] {
+                    {Complex.ONE, Complex.ZERO, Complex.ZERO, Complex.ZERO},
+                    {Complex.ZERO, Complex.ZERO, Complex.ONE, Complex.ZERO},
+                    {Complex.ZERO, Complex.ONE, Complex.ZERO, Complex.ZERO},
+                    {Complex.ZERO, Complex.ZERO, Complex.ZERO, Complex.ONE},
+            });
+
+
     /**
      * C-NOT gate
      */
@@ -61,8 +94,8 @@ public class Gates {
                     {Complex.ZERO, Complex.ZERO, Complex.ZERO, Complex.ONE},
                     {Complex.ZERO, Complex.ZERO, Complex.ONE, Complex.ZERO},
             });
-
     //TODO: Create a 'generic' control gate so it can be combined with other gates
+    //TODO: This is built up using identity and control.
 
     /**
      * Quantum Fourier gate
