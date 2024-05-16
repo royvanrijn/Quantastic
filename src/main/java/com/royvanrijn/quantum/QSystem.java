@@ -1,5 +1,7 @@
 package com.royvanrijn.quantum;
 
+import static com.royvanrijn.quantum.Gates.FOURIER_GATE;
+
 import java.util.Arrays;
 
 import org.apache.commons.math3.complex.Complex;
@@ -72,6 +74,42 @@ public class QSystem {
     }
 
     /**
+     * In a simulator we can do a sneaky measure... without affecting the system
+     * @return
+     */
+    public void sneakyMeasure(int amount) {
+
+        double[] normalized = getNormalized();
+
+        int[] bitsTrue = new int[qubits];
+
+        for(int i = 0; i < amount; i++) {
+            // Take a measurement over the normalized values:
+            double measurement = Math.random();
+
+            int measuredState = 0;
+            for(; measuredState < normalized.length; measuredState++) {
+                measurement -= normalized[measuredState];
+                if(measurement < 0) {
+                    break;
+                }
+            }
+
+            for(int x = 0; x < qubits; x++) {
+                if((measuredState&(1<<x))!=0) {
+                    bitsTrue[x]++;
+                }
+            }
+            System.out.println("\tState: " + toBinaryString(measuredState) + " " + measuredState + " "+ (measuredState*1.0)/(Math.pow(2,qubits)));
+        }
+
+        System.out.println(Arrays.toString(bitsTrue));
+
+
+
+    }
+
+    /**
      * Method for getting the normalized real values.
      * @return
      */
@@ -87,6 +125,17 @@ public class QSystem {
         return Arrays.stream(values).map(d -> d / valuesTotal).toArray();
     }
 
+
+    public QSystem applyMultipleGate(final FieldMatrix<Complex> gate, final int... wires) {
+        final int matrixQubits = (int) Math.sqrt(gate.getRowDimension());
+        int kroneckerSize = wires.length/matrixQubits;
+        FieldMatrix<Complex> matrix = gate;
+        for(int times = 1; times < kroneckerSize; times++) {
+            matrix = Gates.kroneckerProduct(matrix, gate);
+        }
+        return applyGate(matrix, wires);
+    }
+
     /**
      * Apply a gate to the given wires.
      *
@@ -98,67 +147,130 @@ public class QSystem {
 
         final Complex[][] gateData = gate.getData();
 
-        System.out.println("Gate:");
         // TODO We don't need to apply each gate separately, most quantum systems/simulators have an option to apply multiple gates at different steps.
         // Should be possible to implement.
 
-        FieldMatrix<Complex> masterGate = createEmptyMatrix();
+        FieldMatrix<Complex> masterGate = createEmptyMatrix(systemSize, systemSize);
 
         int[] sortedWires = Arrays.copyOf(wires, wires.length);
         Arrays.sort(sortedWires);
 
+        int wireMask = 0;
+        for(int wire : wires) {
+            wireMask |= 1<<wire;
+        }
+
         for(int row = 0; row < systemSize; row++)  {
+
+            int rowNotWire = ~wireMask & row;
+            int rowQubitsWire = 0;
+            for(int i = wires.length-1; i >= 0; i--) {
+                rowQubitsWire = (rowQubitsWire << 1) | ((row >> wires[i]) & 1);
+            }
+
             for(int col = 0; col < systemSize; col++) {
 
                 // Weird bit of code based on:
                 // https://github.com/RoboNeo9/Java-Quantum-Computer-Simulator/blob/master/Core/MasterGate.java
 
-                // First we look up which qubits are NOT part of the wires of this gate:
-                int rowQubitsNotWire = 0;
-                int colQubitsNotWire = 0;
+                int colNotWire = ~wireMask & col;
 
-                //TODO optimize this:
-                for(int i = 0; i < qubits; i++) {
-                    // If this is NOT part of the wire, add these bits to our bitstring:
-                    if(Arrays.binarySearch(sortedWires, i) < 0) {
-                        // Shift everything and add the current row and col bit:
-                        rowQubitsNotWire = (rowQubitsNotWire << 1) | ((row >> i) & 1);
-                        colQubitsNotWire = (colQubitsNotWire << 1) | ((col >> i) & 1);
-                    }
-                }
+                if(rowNotWire == colNotWire) {
 
-                if(rowQubitsNotWire == colQubitsNotWire) {
-
-                    int rowQubitsWire = 0;
                     int colQubitsWire = 0;
-
-                    //TODO optimize this:
-                    // Beware, the order of wires here is important (in relation to the gate), reverse traversal matters
                     for(int i = wires.length-1; i >= 0; i--) {
-                        int wire = wires[i];
-                        // Shift everything and add the current row and col bit:
-                        rowQubitsWire = (rowQubitsWire << 1) | ((row >> wire) & 1);
-                        colQubitsWire = (colQubitsWire << 1) | ((col >> wire) & 1);
+                        colQubitsWire = (colQubitsWire << 1) | ((col >> wires[i]) & 1);
                     }
 
                     Complex data = gateData[rowQubitsWire][colQubitsWire];
-                    masterGate.setEntry(row, col, clean(data));
+                    masterGate.setEntry(row, col, data);
                 }
             }
         }
 
-        // Print the matrix:
+//        System.out.println(masterGate.getRowDimension()+" x "+masterGate.getColumnDimension());
+
+//        System.out.println("Applying gate:");
 //        prettyPrintMatrix(masterGate);
 
-        System.out.println(masterGate.getRowDimension()+" x "+masterGate.getColumnDimension());
-        // TODO: If the gate we're applying only affects some qubits, like a single wire, do we need this large matrix?
-        // Apply the gate matrix to the system:
         system = system.multiply(masterGate);
 
-        prettyPrintMatrix(system);
+//        System.out.println("Updated system:");
+//        prettyPrintMatrix(system);
 
         return this;
     }
+
+    /**
+     * Applies a controlled-U gate to the system.
+     * @param gate The unitary gate U.
+     * @param controlQubit The control qubit.
+     * @param targetQubit The target qubit.
+     */
+    public QSystem applyControlledUGate(final FieldMatrix<Complex> gate, final int controlQubit, final int targetQubit) {
+        int size = systemSize;
+        Complex[][] cuMatrix = new Complex[size][size];
+
+        // Initialize the controlled-U matrix as an identity matrix
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                cuMatrix[i][j] = (i == j) ? Complex.ONE : Complex.ZERO;
+            }
+        }
+
+        // Apply the controlled gate
+        for (int i = 0; i < size; i++) {
+            if ((i & (1 << controlQubit)) != 0) { // Control qubit is 1
+                int rowIndex = i ^ (1 << targetQubit);
+                for (int j = 0; j < size; j++) {
+                    if ((j & (1 << controlQubit)) != 0) { // Control qubit is 1
+                        int colIndex = j ^ (1 << targetQubit);
+                        cuMatrix[i][j] = gate.getEntry(rowIndex % gate.getRowDimension(), colIndex % gate.getColumnDimension());
+                    }
+                }
+            }
+        }
+
+        FieldMatrix<Complex> controlledU = MatrixUtils.createFieldMatrix(cuMatrix);
+        return applyGate(controlledU, controlQubit, targetQubit);
+    }
+
+    /**
+     * Applies modular exponentiation to the system.
+     * @param base The base for exponentiation.
+     * @param modulus The modulus.
+     * @param numQubits The number of qubits.
+     */
+    public QSystem applyModularExponentiation(int base, int modulus, int numQubits) {
+        for (int i = 0; i < numQubits; i++) {
+            int exponent = (int) Math.pow(base, Math.pow(2, i)) % modulus;
+            FieldMatrix<Complex> modExpMatrix = createModExpMatrix(exponent, modulus, numQubits);
+            applyControlledUGate(modExpMatrix, i, numQubits + i);
+        }
+        return this;
+    }
+
+    private FieldMatrix<Complex> createModExpMatrix(int exponent, int modulus, int numQubits) {
+        int size = (int) Math.pow(2, numQubits);
+        Complex[][] matrix = new Complex[size][size];
+        for (int i = 0; i < size; i++) {
+            int result = (i * exponent) % modulus;
+            for (int j = 0; j < size; j++) {
+                matrix[i][j] = (j == result) ? Complex.ONE : Complex.ZERO;
+            }
+        }
+        return MatrixUtils.createFieldMatrix(matrix);
+    }
+
+    /**
+     * Applies the inverse Fourier gate to the system.
+     */
+    public QSystem applyInverseFourierGate(int qubits) {
+        FieldMatrix<Complex> invQFT = FOURIER_GATE(qubits).transpose();
+        return applyGate(invQFT, 0, qubits - 1);
+    }
+
+
 
     /**
      * Small method to clean up the gate
@@ -177,14 +289,13 @@ public class QSystem {
         return data;
     }
 
-    private FieldMatrix<Complex> createEmptyMatrix() {
-        Complex[][] initialMatrix = new Complex[systemSize][systemSize];
-        for(int i = 0; i < systemSize; i++) Arrays.fill(initialMatrix[i], Complex.ZERO);
+    public static FieldMatrix<Complex> createEmptyMatrix(int rows, int cols) {
+        Complex[][] initialMatrix = new Complex[rows][cols];
+        for(int row = 0; row < rows; row++) Arrays.fill(initialMatrix[row], Complex.ZERO);
         return MatrixUtils.createFieldMatrix(initialMatrix);
     }
 
-    private void prettyPrintMatrix(final FieldMatrix<Complex> masterGate) {
-        System.out.println("Applying gate:");
+    public static void prettyPrintMatrix(final FieldMatrix<Complex> masterGate) {
         for(int i = 0; i < masterGate.getRowDimension(); i++) {
             System.out.print("\t");
             for(int z = 0; z < masterGate.getColumnDimension(); z++) {

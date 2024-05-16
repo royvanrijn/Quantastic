@@ -1,34 +1,94 @@
 package com.royvanrijn.quantum;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class ShorAlgorithm {
-
     public static void main(String[] args) {
+        int N = 15; // Number to factor
+        int a = 7;  // Co-prime number with N (e.g., a = 7)
+        int numQubits = 4; // Number of qubits for the demonstration
+        int numRuns = 10; // Number of runs to collect results
 
-        // This seems to be working as expected:
+        List<Integer> measurements = new ArrayList<>();
 
-        // https://algassert.com/quirk#circuit=%7B%22cols%22:%5B%5B%22H%22,%22H%22,%22H%22,%22H%22,%22H%22,%22H%22,%22H%22,%22H%22,%22H%22,%22H%22%5D,%5B%22Z%22,%22%E2%80%A2%22%5D,%5B%22Bloch%22,%22Bloch%22%5D,%5B%22Chance10%22%5D,%5B%22QFT%E2%80%A010%22%5D,%5B%22Chance10%22%5D%5D%7D
+        // Run the quantum part of the algorithm multiple times
+        for (int i = 0; i < numRuns; i++) {
+            QSystem qSystem = new QSystem(numQubits * 2);
 
-        new QSystem(10)
-                .applyGate(Gates.HADAMARD_GATE, 0)
-                .applyGate(Gates.HADAMARD_GATE, 1)
-                .applyGate(Gates.HADAMARD_GATE, 2)
-                .applyGate(Gates.HADAMARD_GATE, 3)
-                .applyGate(Gates.HADAMARD_GATE, 4)
-                .applyGate(Gates.HADAMARD_GATE, 5)
-                .applyGate(Gates.HADAMARD_GATE, 6)
-                .applyGate(Gates.HADAMARD_GATE, 7)
-                .applyGate(Gates.HADAMARD_GATE, 8)
-                .applyGate(Gates.HADAMARD_GATE, 9)
-                .applyGate(Gates.HADAMARD_GATE, 10)
-                .applyGate(Gates.CZ_GATE, 0, 1)
-                .applyGate(Gates.FOURIER_GATE(10), 0,1,2,3,4,5,6,7,8,9)
-                .print()
-                .measure();
+            // Apply Hadamard gate to the first set of qubits
+            for (int j = 0; j < numQubits; j++) {
+                qSystem.applyGate(Gates.HADAMARD_GATE, j);
+            }
 
-        // Next step is implementing:
-        // https://algassert.com/quirk#circuit={%22cols%22:[[%22H%22,%22H%22,%22H%22,%22H%22,%22H%22,%22H%22,%22H%22,%22H%22],[%22Z%22,%22%E2%80%A2%22,%22%E2%80%A2%22],[%22Chance8%22],[%22%E2%80%A6%22,%22%E2%80%A6%22,%22%E2%80%A6%22,%22%E2%80%A6%22,%22%E2%80%A6%22,%22%E2%80%A6%22,%22%E2%80%A6%22,%22%E2%80%A6%22],[%22Swap%22,1,1,1,1,1,1,%22Swap%22],[1,%22Swap%22,1,1,1,1,%22Swap%22],[1,1,%22Swap%22,1,1,%22Swap%22],[1,1,1,%22Swap%22,%22Swap%22],[%22H%22],[%22Z^%C2%BD%22,%22%E2%80%A2%22],[1,%22H%22],[%22Z^%C2%BC%22,%22Z^%C2%BD%22,%22%E2%80%A2%22],[1,1,%22H%22],[%22Z^%E2%85%9B%22,%22Z^%C2%BC%22,%22Z^%C2%BD%22,%22%E2%80%A2%22],[1,1,1,%22H%22],[%22Z^%E2%85%9F%E2%82%81%E2%82%86%22,%22Z^%E2%85%9B%22,%22Z^%C2%BC%22,%22Z^%C2%BD%22,%22%E2%80%A2%22],[1,1,1,1,%22H%22],[%22Z^%E2%85%9F%E2%82%83%E2%82%82%22,%22Z^%E2%85%9F%E2%82%81%E2%82%86%22,%22Z^%E2%85%9B%22,%22Z^%C2%BC%22,%22Z^%C2%BD%22,%22%E2%80%A2%22],[1,1,1,1,1,%22H%22],[%22Z^%E2%85%9F%E2%82%86%E2%82%84%22,%22Z^%E2%85%9F%E2%82%83%E2%82%82%22,%22Z^%E2%85%9F%E2%82%81%E2%82%86%22,%22Z^%E2%85%9B%22,%22Z^%C2%BC%22,%22Z^%C2%BD%22,%22%E2%80%A2%22],[1,1,1,1,1,1,%22H%22],[%22Z^%E2%85%9F%E2%82%81%E2%82%82%E2%82%88%22,%22Z^%E2%85%9F%E2%82%86%E2%82%84%22,%22Z^%E2%85%9F%E2%82%83%E2%82%82%22,%22Z^%E2%85%9F%E2%82%81%E2%82%86%22,%22Z^%E2%85%9B%22,%22Z^%C2%BC%22,%22Z^%C2%BD%22,%22%E2%80%A2%22],[1,1,1,1,1,1,1,%22H%22],[%22Chance8%22]]}
+            // Apply modular exponentiation
+            qSystem.applyModularExponentiation(a, N, numQubits);
 
-        // TODO: I'll need double control C-gates, implement a generic case for this
-        // TODO: Z-gates with a partial 1/8, 1/4th etc.
+            // Apply Quantum Fourier Transform
+            qSystem.applyGate(Gates.FOURIER_GATE(numQubits), 0, numQubits - 1);
+
+            // Apply inverse Quantum Fourier Transform
+            qSystem.applyInverseFourierGate(numQubits);
+
+            // Measure the qubits and collect the result
+            int result = qSystem.measure();
+            measurements.add(result);
+        }
+
+        // Print the collected measurements
+        System.out.println("Collected measurements: " + measurements);
+
+        // Perform classical post-processing to determine the period
+        int period = findPeriod(measurements, N, a, numQubits * 2);
+        System.out.println("Estimated period: " + period);
+
+        // Use the period to find the factors of N
+        if (period > 0) {
+            int factor1 = gcd((int) Math.pow(a, period / 2) - 1, N);
+            int factor2 = gcd((int) Math.pow(a, period / 2) + 1, N);
+            System.out.println("Factors of " + N + " are: " + factor1 + " and " + factor2);
+        } else {
+            System.out.println("Failed to find the period.");
+        }
     }
+
+    // Classical post-processing to find the period from the measurements
+    private static int findPeriod(List<Integer> measurements, int N, int a, int totalQubits) {
+        int period = 0;
+        double q = Math.pow(2, totalQubits); // Calculate the denominator as 2^totalQubits
+
+        for (int result : measurements) {
+            double fraction = result / q;
+            int denominator = findDenominator(fraction, N, a);
+            if (denominator > 1) {
+                period = denominator;
+                break;
+            }
+        }
+
+        return period;
+    }
+
+    private static int findDenominator(double fraction, int N, int a) {
+        int maxDenominator = 1000; // Limit to prevent infinite loops
+        for (int denominator = 1; denominator < maxDenominator; denominator++) {
+            if (Math.abs(fraction * denominator - Math.round(fraction * denominator)) < 1e-6) {
+                if (Math.pow(a, denominator) % N == 1) {
+                    return denominator;
+                }
+            }
+        }
+        return 0;
+    }
+
+    // Euclidean algorithm to find the greatest common divisor (GCD)
+    private static int gcd(int a, int b) {
+        while (b != 0) {
+            int temp = b;
+            b = a % b;
+            a = temp;
+        }
+        return a;
+    }
+
 }
